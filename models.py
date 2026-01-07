@@ -78,13 +78,19 @@ class Building:
         if start_room not in floor.rooms or end_room not in floor.rooms:
             return None
 
+        #Create the BFS queue as FIFO
         queue = [[start_room]]
+
+        # Keep track of visited rooms to avoid cycles
         visited = {start_room}
 
+        #Run BFS
         while queue:
+            #Get the first path from the queue
             path = queue.pop(0)
             current_room = path[-1]
 
+            # Check if we reached the destination
             if current_room == end_room:
                 return path
 
@@ -145,9 +151,7 @@ class Building:
                 G.add_edge(room.name, other_room.name)
 
         # Create custom labels
-        labels = {}
-        for room in floor.rooms:
-            labels[room.name] = f"{room.name}\n(Windows: {room.windows}, Doors: {len(room.doors)})"
+        labels = {room.name: f"{room.name}\n Windows: {room.windows}, \n Doors: {len(room.doors)} \n Lights: {room.lights}" for room in floor.rooms}
 
         # Get positions for the nodes
         pos = nx.spring_layout(G, seed=42)  # Seed for reproducible layout
@@ -185,7 +189,7 @@ class Building:
         pos = nx.spring_layout(G, seed=42)
 
         # Create labels with room details
-        labels = {room.name: f"{room.name}\n(Windows: {room.windows}, Doors: {len(room.doors)})" for room in floor.rooms}
+        labels = {room.name: f"{room.name}\n Windows: {room.windows}, \n Doors: {len(room.doors)} \n Lights: {room.lights}" for room in floor.rooms}
 
         # Color nodes based on path
         path_room_names = [room.name for room in path]
@@ -206,6 +210,6 @@ class Building:
         # Draw labels
         nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, font_family='sans-serif')
         
-        plt.title("Building Path")
+        plt.title("Path between " + path_room_names[0] + " and " + path_room_names[-1])
         plt.axis('off')
         plt.show()

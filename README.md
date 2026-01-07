@@ -31,3 +31,6 @@ python -m unittest -v test_models.py
 ### Viewing the Plots
 
 The test file (`test_models.py`) is configured to generate and display plots for the building layout and for a found path. When you run the tests, `matplotlib` will open windows to show these visualizations. Simply close the plot windows to allow the test execution to complete.
+
+The plot below shows a simple test of the find_path method where the green line and nodes is the returned path:
+![Path Visualization](path_visualization.png)
