@@ -11,19 +11,21 @@ class TestBuilding(unittest.TestCase):
         self.room4 = Room("Bathroom", windows=0, lights=1)
         self.room5 = Room("Corridor", windows=0, lights=4)
         self.room6 = Room("Office Room 3", windows=1, lights=2)
-        self.room7 = Room("Office Room 4", windows=0, lights=0)
+        self.room7 = Room("Office Room 4", windows=1, lights=1)
+        self.room8 = Room("Office Room 5", windows=2, lights=2)
 
         # Define adjacency
         self.room1._adjacent_rooms = (self.room5,)
         self.room2._adjacent_rooms = (self.room5,)
-        self.room3._adjacent_rooms = (self.room5,)
+        self.room3._adjacent_rooms = (self.room5, self.room8)
         self.room4._adjacent_rooms = (self.room5, self.room6)
         self.room5._adjacent_rooms = (self.room1, self.room2, self.room3, self.room4, self.room6)
         self.room6._adjacent_rooms = (self.room5, self.room7)
-        self.room7._adjacent_rooms = (self.room6,)
+        self.room7._adjacent_rooms = (self.room6, self.room8)
+        self.room8._adjacent_rooms = (self.room3, self.room7)
 
         # Create a floor and add rooms
-        self.floor = Floor(rooms=[self.room1, self.room2, self.room3, self.room4, self.room5, self.room6, self.room7])
+        self.floor = Floor(rooms=[self.room1, self.room2, self.room3, self.room4, self.room5, self.room6, self.room7, self.room8])
 
         # Create a building and add the floor
         self.building = Building(floors=[self.floor])
@@ -32,25 +34,32 @@ class TestBuilding(unittest.TestCase):
         self.building.add_door_between_rooms(self.room1, self.room5, 1, 1)
         self.building.add_door_between_rooms(self.room2, self.room5, 1, 2)
         self.building.add_door_between_rooms(self.room3, self.room5, 1, 3)
+        self.building.add_door_between_rooms(self.room3, self.room8, 2, 1)
         self.building.add_door_between_rooms(self.room4, self.room5, 1, 4)
         self.building.add_door_between_rooms(self.room6, self.room5, 1, 5)
         self.building.add_door_between_rooms(self.room6, self.room7, 2, 1)
+        self.building.add_door_between_rooms(self.room7, self.room8, 2, 2)
 
     def test_find_path(self):
-        path = self.building.find_path(self.room1, self.room7)
-        self.assertIsNotNone(path)
-        self.assertEqual(path, [self.room1, self.room5, self.room6, self.room7])
+        paths = self.building.find_path(self.room1, self.room7)
+        self.assertTrue(len(paths) > 0)
 
-        self.building.plot_path(path)
+        # Provide the expected paths
+        expected_paths = [[self.room1, self.room5, self.room6, self.room7], [self.room1, self.room5, self.room3, self.room8, self.room7]]
+        self.assertEqual(expected_paths, paths)
 
-        path_same_room = self.building.find_path(self.room1, self.room1)
-        self.assertEqual(path_same_room, [self.room1])
+        # Plot the paths found
+        if paths:
+            self.building.plot_path(paths)
+
+        paths_same_room = self.building.find_path(self.room1, self.room1)
+        self.assertEqual(paths_same_room, [[self.room1]])
 
         # Create a disconnected room
-        room8 = Room("Isolated Room")
-        self.floor.add_room(room8)
-        path_no_connection = self.building.find_path(self.room1, room8)
-        self.assertIsNone(path_no_connection)
+        room9 = Room("Isolated Room")
+        self.floor.add_room(room9)
+        path_no_connection = self.building.find_path(self.room1, room9)
+        self.assertEqual(path_no_connection, [])
 
     def test_add_door(self):
         # Test adding a valid door

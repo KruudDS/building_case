@@ -71,18 +71,18 @@ class Building:
 
     def find_path(self, start_room, end_room):
         if not self.floors:
-            return None
+            return []
 
         # Assuming a single floor for this problem
         floor = self.floors[0]
         if start_room not in floor.rooms or end_room not in floor.rooms:
-            return None
+            return []
 
         #Create the BFS queue as FIFO
         queue = [[start_room]]
 
-        # Keep track of visited rooms to avoid cycles
-        visited = {start_room}
+        # Keep track of all found paths
+        all_paths = []
 
         #Run BFS
         while queue:
@@ -92,16 +92,16 @@ class Building:
 
             # Check if we reached the destination
             if current_room == end_room:
-                return path
+                all_paths.append(path)
+                continue  # Continue searching for more paths
 
             for door_number, next_room in current_room.doors.items():
-                if next_room not in visited:
-                    visited.add(next_room)
+                if next_room not in path:  # Check if room is not already in current path (to avoid cycles)
                     new_path = list(path)
                     new_path.append(next_room)
                     queue.append(new_path)
         
-        return None # No path found
+        return all_paths  # Return all paths found
 
     def add_door_between_rooms(self, room1, room2, door_num1, door_num2):
         if room2 not in room1.adjacent_rooms or room1 not in room2.adjacent_rooms:
@@ -171,8 +171,8 @@ class Building:
         plt.axis('off') # Hide the axes
         plt.show()
 
-    def plot_path(self, path):
-        if not path:
+    def plot_path(self, paths):
+        if not paths:
             print("Cannot plot an empty path.")
             return
 
@@ -191,12 +191,15 @@ class Building:
         # Create labels with room details
         labels = {room.name: f"{room.name}\n Windows: {room.windows}, \n Doors: {len(room.doors)} \n Lights: {room.lights}" for room in floor.rooms}
 
-        # Color nodes based on path
-        path_room_names = [room.name for room in path]
-        node_colors = ['lightgreen' if node in path_room_names else 'skyblue' for node in G.nodes()]
+        # Collect all rooms and edges from all paths
+        path_room_names = set()
+        path_edges = set()
+        for path in paths:
+            path_room_names.update(room.name for room in path)
+            path_edges.update(zip([room.name for room in path[:-1]], [room.name for room in path[1:]]))
 
-        # Identify edges in the path
-        path_edges = list(zip(path_room_names, path_room_names[1:]))
+        # Color nodes based on path
+        node_colors = ['lightgreen' if node in path_room_names else 'skyblue' for node in G.nodes()]
 
         plt.figure(figsize=(12, 8))
         
@@ -205,11 +208,13 @@ class Building:
         nx.draw_networkx_edges(G, pos, width=2.0, alpha=0.7, edge_color='gray')
 
         # Highlight path edges
-        nx.draw_networkx_edges(G, pos, edgelist=path_edges, width=4.0, edge_color='green')
+        nx.draw_networkx_edges(G, pos, edgelist=list(path_edges), width=4.0, edge_color='green')
         
         # Draw labels
         nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, font_family='sans-serif')
         
-        plt.title("Path between " + path_room_names[0] + " and " + path_room_names[-1])
+        start_room_name = paths[0][0].name
+        end_room_name = paths[0][-1].name
+        plt.title(f"Paths between {start_room_name} and {end_room_name}")
         plt.axis('off')
         plt.show()
